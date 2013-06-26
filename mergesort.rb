@@ -10,10 +10,8 @@ def merge_sort(array)
 	left_min = left.shift
 	right_min = right.shift
 	until result.size == array.size
-		puts "merging #{left_min} and #{right_min}"
 		if left_min <= right_min
 			result << left_min
-			puts "adding left"
 			if left.size > 0
 				left_min = left.shift 
 			else
@@ -22,7 +20,6 @@ def merge_sort(array)
 			end
 		else
 			result << right_min
-			puts "adding right"
 			if right.size > 0
 				right_min = right.shift 
 			else
