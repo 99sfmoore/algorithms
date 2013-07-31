@@ -41,7 +41,7 @@ def sort_and_count(array)
 	[result, inversions]
 end
 
-longstring = File.read("PS1.txt")
+longstring = File.read("PS1_current.txt")
 test_array = longstring.split("\r\n")
 test_array.map!{|x| x.to_i}
 p test_array
