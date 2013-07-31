@@ -9,7 +9,6 @@ end
 
 
 def choose_pivot(pivot_choice,array,left,right)
-	print "array is #{array[left..right]} and .."
 	case pivot_choice
 
 	when 1 #choose first element
@@ -22,16 +21,13 @@ def choose_pivot(pivot_choice,array,left,right)
 
 	when 3 #choose median of 3
 		array_of_3 = [array[left], array[right], array[(right-left)/2 + left]]
-		puts "pivot_choice array is #{array_of_3}"
 		if array_of_3.uniq.size < 3
 			median = array_of_3.min
 		else
 			max = array_of_3.max
 			min = array_of_3.min
 			median = array_of_3.select {|x| x != max && x != min}.first
-			puts "max is #{max}, min is #{min}"
 		end
-		puts "and median is #{median}"
 
 		if median == array[left]
 			pivot = array[left]
@@ -43,10 +39,8 @@ def choose_pivot(pivot_choice,array,left,right)
 			pivot = array[(right-left)/2 + left]
 			array[(right-left)/2 + left] = array[left]
 			array[left] = pivot
-			puts "center pivot is #{pivot}"
 		end
 	end
-	puts "..pivot is #{pivot}"
 	pivot
 end
 
@@ -88,7 +82,7 @@ end
 my_array = [20, 30, 40, 21, 11, 9, 56, 82, 32, 101, 2, 4, 67]
 my_array2 = [50, 60, 40, 30, 70, 20, 80, 10]
 
-longstring = File.read("PS2.txt")
+longstring = File.read("PS2_current.txt")
 test_array = longstring.split("\r\n")
 test_array.map!{|x| x.to_i}
 #p test_array
