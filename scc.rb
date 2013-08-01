@@ -61,18 +61,14 @@ class Graph
   def dfs(start_node, reverse=true)
     start_node.visited = reverse
     reverse ? arcs = start_node.gets_arcs_from : arcs = start_node.has_arcs_to
-    index = 0
-    forward_path = false
-    until index == arcs.size || forward_path do
-      next_node = @unordered_nodes[arcs[index]]
-      if next_node.visited == reverse
-        index +=1 
-      else
+    arcs.each do |end_node|
+      next_node = @unordered_nodes[end_node]
+      unless next_node.visited == reverse
         @stack << next_node
-        forward_path = true
+        dfs(next_node, reverse)
+        break
       end
     end
-    dfs(next_node, reverse) if forward_path
   end
 
   def find_gcc
