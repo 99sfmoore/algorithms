@@ -6,8 +6,8 @@ class Heap
     @heap = []
   end
 
-  def parent(index)
-    @heap[index/2-1]
+  def parent_key(index)
+    @heap[(index+1)/2-1].first
   end
 
   def min_child_key(index)
@@ -23,18 +23,19 @@ class Heap
   end
 
   def swap(index1, index2)
-    temp = @heap[index1].dup
-    @heap[index1] = @heap[index2].dup
+    temp = @heap[index1]
+    @heap[index1] = @heap[index2]
     @heap[index2] = temp
   end
 
   def insert(key,item)
+    #binding.pry
     my_item = [key,item]
     @heap<<my_item
     index = @heap.size-1
-    while parent(index).first > my_item.first
-      swap(index/2,index)
-      index = index/2
+    while parent_key(index) > key
+      swap((index+1)/2-1,index)
+      index = (index+1)/2-1
     end
   end
 
@@ -53,14 +54,20 @@ class Heap
   end
 
   def delete(item)
-    binding.pry
-    index = @heap.index(item)
-    prev_dist = @heap.delete_at(index).first
-    until @heap[index].first <= min_child_key(index)
-      next_index = min_child_index(index)
-      swap(index,next_index)
-      index = next_index
-    end
+    found_index = nil
+    @heap.each_with_index do |comp_item, index|
+      if comp_item.last == item
+        found_index = index
+        break
+      end
+    end 
+    #binding.pry if item == 156
+    prev_dist = @heap.delete_at(found_index).first
+      until found_index >= @heap.size || @heap[found_index].first <= min_child_key(found_index)
+        next_index = min_child_index(found_index)
+        swap(found_index,next_index)
+        found_index = next_index
+      end
     prev_dist
   end
 
@@ -99,7 +106,6 @@ class Graph
         @graph[new_node].edges << pair.split(",").map{|x| x.to_i}
       end
     end
-    p @graph
   end
 
   def shortest_paths(start)
@@ -109,7 +115,6 @@ class Graph
     current_node = @graph[start]
     current_node.visited = true
     visited_list = [start]
-
     until visited_list.size == @graph.size
       min_dist = Float::INFINITY
       new_node = nil
@@ -141,25 +146,29 @@ class Graph
     current_node.visited = true
     visited_list = [start]
     unvisited = Heap.new
-    @graph.keys.delete_if{|x| x == start}.each do |node_name|
-      current_node = @graph[node_name]
-      min_dist = Float::INFINITY
-      current_node.edges.each do |edge|
-        if edge.first == start && edge.last < min_dist
-          min_dist = edge.last
-        end
+    heapified = [start]
+    current_node.edges.each do |edge|
+      unvisited.insert(edge.last,edge.first)
+      heapified << edge.first
+    end
+    @graph.keys.each do |node_name|
+      unless heapified.include?(node_name)
+        min_dist = Float::INFINITY
+        unvisited.insert(min_dist,node_name)
       end
-      unvisited.insert(min_dist,current_node)
     end
     p unvisited
+   
     until visited_list.size == @graph.size
+      puts "visited size is #{visited_list.size} and graph size is #{@graph.size}"
+      #binding.pry
       dist, node = unvisited.extract_min
-      @graph[node.name].visited = true
-      visited_list << node.name
-      @shortest_paths[node.name] = dist
-      node.edges.each do |edge|
+      @graph[node].visited = true
+      visited_list << node
+      @shortest_paths[node] = dist
+      @graph[node].edges.each do |edge|
         unless @graph[edge.first].visited
-          prev_dist = unvisited.delete(@graph[edge.first]) #need to implement this
+          prev_dist = unvisited.delete(edge.first) #need to implement this
           new_dist = [prev_dist, dist+edge.last].min
           unvisited.insert(new_dist,edge.first)
         end
@@ -176,7 +185,7 @@ end
 
 =begin  
 CORRECT ANSWER
-2599
+2599 wrong 6110
 2610
 2947
 2052
@@ -184,19 +193,19 @@ CORRECT ANSWER
 2399
 2029
 2442
-2505
+2505 wrong 2610
 3068
 =end
 
 
 
-my_graph = Graph.new("ps_5_test.txt")
+my_graph = Graph.new("ps_5.txt")
 paths = my_graph.heaped_shortest_paths(1)
-p paths
+#p paths
 
-#[7,37,59,82,99,115,133,165,188,197].each do |num|
-#  puts paths[num]
-#end
+[7,37,59,82,99,115,133,165,188,197].each do |num|
+ puts paths[num]
+end
 
 
 
