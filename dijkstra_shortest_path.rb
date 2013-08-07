@@ -45,12 +45,19 @@ class Heap
   end
 
   def bubble_down(index)
-    until @heap[index].first <= min_child_key(index)
+    until key(index) <= min_child_key(index)
       next_index = min_child_index(index)
       swap(index,next_index)
       index = next_index
     end
   end
+
+  def find_index(item)
+    @heap.each_with_index do |comp_item, i|
+      return i if comp_item.last == item
+    end
+  end
+
 
   public
 
@@ -61,25 +68,20 @@ class Heap
   end
 
   def extract_min
-    min_value = @heap.shift
-    unless @heap.empty?
-      @heap.unshift(@heap.pop)
+    min_value = @heap.first
+    if @heap.size == 1
+      @heap.pop
+    else
+      @heap[0] = @heap.pop
       bubble_down(0)
     end
     min_value
   end
 
-  def delete(item)
-    index = nil
-    @heap.each_with_index do |comp_item, i|
-      if comp_item.last == item
-        index = i
-        break
-      end
-    end 
-    prev_dist = @heap.delete_at(index).first
-    bubble_down(index) unless index == @heap.size
-    return prev_dist
+  def rekey(new_key, item)
+    index = find_index(item)
+    @heap[index] = [new_key, item]
+    bubble_up(index) unless index == 0
   end
 
   def empty?
@@ -94,7 +96,7 @@ class Graph
     def initialize 
       @visited = false
       @edges = []
-      @min_dist = Float::INFINITY #do I need this???
+      @min_dist = Float::INFINITY
     end
   end
 
@@ -153,6 +155,7 @@ class Graph
     heapified = [start]
     @graph[start].edges.each do |edge|
       node, dist = edge
+      @graph[node].min_dist = dist
       init_heap.insert(dist, node)
       heapified << node
     end
@@ -165,10 +168,11 @@ class Graph
   def recalc_crossing_edges(node, dist)
     @graph[node].edges.each do |edge|
       next_node, next_dist = edge
-      unless @graph[next_node].visited
-        prev_dist = @unvisited.delete(next_node)
-        new_dist = [prev_dist, dist+next_dist].min
-        @unvisited.insert(new_dist,next_node)
+      current_node = @graph[next_node]
+      new_dist = dist + next_dist
+      unless current_node.visited || current_node.min_dist < new_dist
+        current_node.min_dist = new_dist
+        @unvisited.rekey(new_dist,next_node)
       end
     end
   end
@@ -193,20 +197,6 @@ class Graph
 end
 
 
-=begin  
-CORRECT ANSWER
-2599 
-2610
-2947
-2052
-2367
-2399
-2029
-2442
-2505 
-3068
-=end
-
 
 my_graph = Graph.new("ps_5.txt")
 methods = [:shortest_paths, :heaped_shortest_paths]
@@ -223,13 +213,16 @@ methods.each do |m|
 end
 
 
-
-
-
-
-
-      
-
-
-
-       
+=begin  
+CORRECT ANSWER
+2599 
+2610
+2947
+2052
+2367
+2399
+2029
+2442
+2505 
+3068
+=end
