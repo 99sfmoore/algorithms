@@ -1,3 +1,5 @@
+require 'pry-nav'
+
 class Graph
 
   class Node
@@ -35,17 +37,8 @@ class Graph
       first_iter ? current_node = @unordered_nodes[n] : current_node = @ordered_nodes[n]
       unless current_node.visited == first_iter
         @stack << current_node
-        dfs(current_node,first_iter)
-        top_node = @stack.pop
-        if first_iter
-          num_processed +=1
-          @ordered_nodes[num_processed] = top_node
-        else
-          @gcc_groups[n] +=1
-        end
         until @stack.empty? do
-          next_node = @stack.last
-          dfs(next_node, first_iter)
+          dfs(first_iter)
           top_node = @stack.pop
           if first_iter
             num_processed +=1
@@ -53,19 +46,20 @@ class Graph
           else
             @gcc_groups[n] +=1
           end
-        end
+        end 
       end
     end
   end
 
-  def dfs(start_node, reverse=true)
+  def dfs(reverse=true)
+    start_node = @stack.last
     start_node.visited = reverse
     reverse ? arcs = start_node.gets_arcs_from : arcs = start_node.has_arcs_to
     arcs.each do |end_node|
       next_node = @unordered_nodes[end_node]
       unless next_node.visited == reverse
         @stack << next_node
-        dfs(next_node, reverse)
+        dfs(reverse)
         break
       end
     end
@@ -80,12 +74,12 @@ class Graph
       top_5.sort!
       top_5[0] = [value,top_5[0]].max
     end
-    p top_5.sort.reverse
+    top_5.sort.reverse
   end
 end
 
 my_graph = Graph.new("ps4_current.txt")
-my_graph.find_gcc
+p my_graph.find_gcc
 
 
 
