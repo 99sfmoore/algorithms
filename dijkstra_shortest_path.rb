@@ -1,5 +1,3 @@
-require 'pry-nav'
-
 class Heap
 
   def initialize
@@ -80,52 +78,23 @@ class Heap
       end
     end 
     prev_dist = @heap.delete_at(index).first
-    unless index >= @heap.size
-      bubble_down(index)
-=begin
-      until @heap[index].first <= min_child_key(index) #bubble down
-        next_index = min_child_index(index)
-        swap(index,next_index)
-        index = next_index
-=end
-      end 
-=begin
-      index = orig_index
-      until @heap[index].first >= parent_key(index) #bubble up
-        swap((index+1)/2-1,index)
-        index = (index+1)/2-1
-      end
-=end      
-    prev_dist
+    bubble_down(index) unless index == @heap.size
+    return prev_dist
   end
 
-
-  def print
-    puts "latest heap"
-    @heap.each_with_index do |arr,i|
-      if arr[0] > min_child_key(i)
-        puts "Node #{arr[1]} at index #{i} is greater than child"
-      end
-      if arr[0] < parent_key(i)
-        puts "Node #{arr[1]} at index #{i} is less than parent"
-      end
-    end
-  end
-
-  def debug
-    binding.pry
+  def empty?
+    @heap.empty?
   end
 end
 
 class Graph
 
   class Node
-    attr_accessor :name, :visited, :edges, :min_dist
-    def initialize(name) #only need name for heaped version
-      @name = name
+    attr_accessor :visited, :edges, :min_dist
+    def initialize 
       @visited = false
       @edges = []
-      @min_dist = Float::INFINITY
+      @min_dist = Float::INFINITY #do I need this???
     end
   end
 
@@ -133,87 +102,87 @@ class Graph
     longstring = File.read(filename)
     graph_array = longstring.split("\r\n")
     @graph = Hash.new
-    #binding.pry
     graph_array.each do |node|
       node_list = node.split(" ")
       new_node = node_list.shift.to_i
-      @graph[new_node] = Node.new(new_node)
+      @graph[new_node] = Node.new
       node_list.each do |pair|
         @graph[new_node].edges << pair.split(",").map{|x| x.to_i}
       end
     end
   end
 
-  def shortest_paths(start)
-    @shortest_paths = []
-    @shortest_paths[start] = 0
-    #binding.pry
-    current_node = @graph[start]
-    current_node.visited = true
-    visited_list = [start]
-    until visited_list.size == @graph.size
-      min_dist = Float::INFINITY
-      new_node = nil
-      visited_list.each do |node|
-        current_node = @graph[node]
-        current_node.edges.each do |next_node|
-          unless @graph[next_node.first].visited 
-            node_dist = @shortest_paths[node] + next_node.last
-            if node_dist < min_dist
-              min_dist = node_dist
-              new_node = next_node.first
-            end
+# for naive implementation O(mn)
+
+  def find_min_crossing
+    min_dist = Float::INFINITY
+    new_node = nil
+    @visited_list.each do |visited_node|
+      current_node = @graph[visited_node]
+      current_node.edges.each do |edge|
+        next_node, dist = edge
+        unless @graph[next_node].visited
+          node_dist = @shortest_paths[visited_node] + dist
+          if node_dist < min_dist
+            min_dist = node_dist
+            new_node = next_node
           end
         end
       end
-      current_node = @graph[new_node]
-      current_node.visited = true
-      visited_list << new_node
+    end
+    return [min_dist, new_node]
+  end
+
+  def shortest_paths(start)
+    @shortest_paths = []
+    @shortest_paths[start] = 0
+    @graph[start].visited = true
+    @visited_list = [start]
+    until @visited_list.size == @graph.size
+      min_dist, new_node = find_min_crossing
+      @graph[new_node].visited = true
+      @visited_list << new_node
       @shortest_paths[new_node] = min_dist
     end
   @shortest_paths
   end
 
+#heaped implementation - O(m log n)
+  def build_heap(start)
+    init_heap = Heap.new
+    heapified = [start]
+    @graph[start].edges.each do |edge|
+      node, dist = edge
+      init_heap.insert(dist, node)
+      heapified << node
+    end
+    @graph.keys.each do |node|
+      init_heap.insert(Float::INFINITY, node) unless heapified.include?(node)
+    end
+    init_heap
+  end
+
+  def recalc_crossing_edges(node, dist)
+    @graph[node].edges.each do |edge|
+      next_node, next_dist = edge
+      unless @graph[next_node].visited
+        prev_dist = @unvisited.delete(next_node)
+        new_dist = [prev_dist, dist+next_dist].min
+        @unvisited.insert(new_dist,next_node)
+      end
+    end
+  end
+
   def heaped_shortest_paths(start)
+    @unvisited = build_heap(start)
     @shortest_paths = []
     @shortest_paths[start] = 0
-    #binding.pry
-    current_node = @graph[start]
-    current_node.visited = true
-    visited_list = [start]
-    unvisited = Heap.new
-    heapified = [start]
-    current_node.edges.each do |edge|
-      $stop = true
-      unvisited.insert(edge.last,edge.first)
-      heapified << edge.first
-    end
-    $stop = false
-    p heapified
-    unvisited.print
-    @graph.keys.each do |node_name|
-      unless heapified.include?(node_name)
-        min_dist = Float::INFINITY
-        unvisited.insert(min_dist,node_name)
-      end
-    end
-    unvisited.print
-    unvisited.debug
-   
-    until visited_list.size == @graph.size
-      puts "visited size is #{visited_list.size} and graph size is #{@graph.size}"
-      #binding.pry
-      dist, node = unvisited.extract_min
+    @graph[start].visited = true
+    until @unvisited.empty? 
+      dist, node = @unvisited.extract_min
       @graph[node].visited = true
-      visited_list << node
       @shortest_paths[node] = dist
-      @graph[node].edges.each do |edge|
-        unless @graph[edge.first].visited
-          prev_dist = unvisited.delete(edge.first) #need to implement this
-          new_dist = [prev_dist, dist+edge.last].min
-          unvisited.insert(new_dist,edge.first)
-        end
-      end
+      recalc_crossing_edges(node, dist)
     end
     @shortest_paths
   end
@@ -239,13 +208,18 @@ CORRECT ANSWER
 =end
 
 
-
 my_graph = Graph.new("ps_5.txt")
-paths = my_graph.heaped_shortest_paths(1)
-#p paths
-
-[7,37,59,82,99,115,133,165,188,197].each do |num|
- puts paths[num]
+methods = [:shortest_paths, :heaped_shortest_paths]
+methods.each do |m|
+  my_graph.reset
+  meth = my_graph.method m.to_sym
+  start = Time.now
+  paths = meth.call(1)
+  [7,37,59,82,99,115,133,165,188,197].each do |num|
+   puts paths[num]
+  end
+  time_elapsed = Time.now - start
+  puts "Time for #{m} is #{time_elapsed}"
 end
 
 
