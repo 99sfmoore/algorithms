@@ -6,8 +6,14 @@ class Heap
     @heap = []
   end
 
+  private
+
   def parent_key(index)
     index == 0 ? -1 : @heap[(index+1)/2-1].first
+  end
+
+  def parent_index(index)
+    (index+1)/2-1
   end
 
   def min_child_key(index)
@@ -22,54 +28,66 @@ class Heap
     @heap[2*index+1].first == min_child_key(index) ? 2*index+1 : 2*index+2
   end
 
+  def key(index)
+    @heap[index].first
+  end
+
   def swap(index1, index2)
     temp = @heap[index1]
     @heap[index1] = @heap[index2]
     @heap[index2] = temp
   end
 
+  def bubble_up(index)
+    until parent_key(index) <= key(index)
+      next_index = parent_index(index)
+      swap(next_index,index)
+      index = next_index
+    end
+  end
+
+  def bubble_down(index)
+    until @heap[index].first <= min_child_key(index)
+      next_index = min_child_index(index)
+      swap(index,next_index)
+      index = next_index
+    end
+  end
+
+  public
+
   def insert(key,item)
-    #binding.pry if $stop
     my_item = [key,item]
     @heap<<my_item
-    index = @heap.size-1
-    until parent_key(index) <= key
-      swap((index+1)/2-1,index)
-      index = (index+1)/2-1
-    end
+    bubble_up(@heap.size-1)
   end
 
   def extract_min
     min_value = @heap.shift
     unless @heap.empty?
       @heap.unshift(@heap.pop)
-      index = 0
-      until @heap[index].first <= min_child_key(index)
-        next_index = min_child_index(index)
-        swap(index,next_index)
-        index = next_index
-      end
+      bubble_down(0)
     end
     min_value
   end
 
   def delete(item)
     index = nil
-    #binding.pry if item == 7
     @heap.each_with_index do |comp_item, i|
       if comp_item.last == item
         index = i
         break
       end
     end 
-    #binding.pry if item == 156
     prev_dist = @heap.delete_at(index).first
     unless index >= @heap.size
-      orig_index = index
+      bubble_down(index)
+=begin
       until @heap[index].first <= min_child_key(index) #bubble down
         next_index = min_child_index(index)
         swap(index,next_index)
         index = next_index
+=end
       end 
 =begin
       index = orig_index
@@ -78,7 +96,6 @@ class Heap
         index = (index+1)/2-1
       end
 =end      
-    end
     prev_dist
   end
 
