@@ -7,7 +7,7 @@ class Heap
   end
 
   def parent_key(index)
-    @heap[(index+1)/2-1].first
+    index == 0 ? -1 : @heap[(index+1)/2-1].first
   end
 
   def min_child_key(index)
@@ -29,11 +29,11 @@ class Heap
   end
 
   def insert(key,item)
-    #binding.pry
+    #binding.pry if $stop
     my_item = [key,item]
     @heap<<my_item
     index = @heap.size-1
-    while parent_key(index) > key
+    until parent_key(index) <= key
       swap((index+1)/2-1,index)
       index = (index+1)/2-1
     end
@@ -54,30 +54,49 @@ class Heap
   end
 
   def delete(item)
-    found_index = nil
-    @heap.each_with_index do |comp_item, index|
+    index = nil
+    #binding.pry if item == 7
+    @heap.each_with_index do |comp_item, i|
       if comp_item.last == item
-        found_index = index
+        index = i
         break
       end
     end 
     #binding.pry if item == 156
-    prev_dist = @heap.delete_at(found_index).first
-      until found_index >= @heap.size || @heap[found_index].first <= min_child_key(found_index)
-        next_index = min_child_index(found_index)
-        swap(found_index,next_index)
-        found_index = next_index
+    prev_dist = @heap.delete_at(index).first
+    unless index >= @heap.size
+      orig_index = index
+      until @heap[index].first <= min_child_key(index) #bubble down
+        next_index = min_child_index(index)
+        swap(index,next_index)
+        index = next_index
+      end 
+=begin
+      index = orig_index
+      until @heap[index].first >= parent_key(index) #bubble up
+        swap((index+1)/2-1,index)
+        index = (index+1)/2-1
       end
+=end      
+    end
     prev_dist
   end
 
 
   def print
     puts "latest heap"
-    @heap.each do |arr|
-      p arr
-      puts ""
+    @heap.each_with_index do |arr,i|
+      if arr[0] > min_child_key(i)
+        puts "Node #{arr[1]} at index #{i} is greater than child"
+      end
+      if arr[0] < parent_key(i)
+        puts "Node #{arr[1]} at index #{i} is less than parent"
+      end
     end
+  end
+
+  def debug
+    binding.pry
   end
 end
 
@@ -148,16 +167,21 @@ class Graph
     unvisited = Heap.new
     heapified = [start]
     current_node.edges.each do |edge|
+      $stop = true
       unvisited.insert(edge.last,edge.first)
       heapified << edge.first
     end
+    $stop = false
+    p heapified
+    unvisited.print
     @graph.keys.each do |node_name|
       unless heapified.include?(node_name)
         min_dist = Float::INFINITY
         unvisited.insert(min_dist,node_name)
       end
     end
-    p unvisited
+    unvisited.print
+    unvisited.debug
    
     until visited_list.size == @graph.size
       puts "visited size is #{visited_list.size} and graph size is #{@graph.size}"
@@ -185,7 +209,7 @@ end
 
 =begin  
 CORRECT ANSWER
-2599 wrong 6110
+2599 
 2610
 2947
 2052
@@ -193,7 +217,7 @@ CORRECT ANSWER
 2399
 2029
 2442
-2505 wrong 2610
+2505 
 3068
 =end
 
