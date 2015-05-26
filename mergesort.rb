@@ -1,9 +1,7 @@
 def merge_sort(array)
 	return array if array.size <=1
 	leftarray = array[0...array.size/2]
-	p leftarray
 	rightarray = array[array.size/2..-1]
-	p rightarray
 	left = merge_sort(leftarray)
 	right = merge_sort(rightarray)
 	result = []
@@ -25,10 +23,7 @@ def merge_sort(array)
 			else
 				result << left_min
 				result = result + left
-			end
-			puts "result is #{result}"
-			
-			
+			end		
 		end
 	end
 	result
@@ -37,7 +32,10 @@ end
 test_array = "qwertyuiopasdfghjklzxcvbnm".split("")
 p test_array
 
-puts merge_sort(test_array)
+start = Time.now
+p merge_sort(test_array)
+puts Time.now-start
+
 	  
 	 
 

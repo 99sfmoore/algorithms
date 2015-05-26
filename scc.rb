@@ -51,7 +51,7 @@ class Graph
     end
   end
 
-  def dfs(reverse=true)
+  def dfs(reverse=false)
     start_node = @stack.last
     start_node.visited = reverse
     reverse ? arcs = start_node.gets_arcs_from : arcs = start_node.has_arcs_to
